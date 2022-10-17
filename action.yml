@@ -77,7 +77,6 @@ runs:
         echo "::group::Initializing the repository"
         $GIT init
         $GIT remote add origin ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY}
-        #$GIT remote add origin ${GITHUB_SERVER_URL}/${REPOSITORY}
         $GIT remote -v
         echo "::endgroup::"
       env:
@@ -93,18 +92,6 @@ runs:
         echo "::endgroup::"
       working-directory: ${{ inputs.path }}
       shell: bash
-
-# This doesn't work. What is wrong?
-#     - name: Setting up auth
-#       run: |
-#         echo "::group::Setting up auth"
-#         BASIC_CREDENTIAL=$(echo "x-access-token:${TOKEN}" | base64 -w0)
-#         echo "::add-mask::${BASIC_CREDENTIAL}"
-#         $GIT config --local http.${GITHUB_SERVER_URL}/.extraHeader "AUTHORIZATION: basic ${BASIC_CREDENTIAL}"
-#         echo "::endgroup::"
-#       env:
-#         TOKEN: ${{ inputs.token }}
-#       shell: bash
 
     - name: Setting up sparse checkout
       run: |
@@ -127,7 +114,7 @@ runs:
             REF=$(gh api repos/$REPOSITORY --jq '.default_branch')
           fi
         fi
-        $GIT -c protocol.version=2 fetch --no-tags --prune --progress --depth=1 origin +${REF}:refs/remotes/origin/${REF}
+        $GIT -c protocol.version=2 fetch --no-tags --prune --progress --filter=blob:none --depth=1 origin +${REF}:refs/remotes/origin/${REF}
         echo "::endgroup::"
       env:
         REF: ${{ inputs.ref }}
