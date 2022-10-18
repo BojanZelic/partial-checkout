@@ -41,7 +41,11 @@ inputs:
     description: 'Relative path under $GITHUB_WORKSPACE to place the repository'
     default: '.'
     required: false
-
+  filter:
+    description: > 
+      Use the partial clone feature and request that the server sends a subset of reachable objects according to a given object filter.
+    default: ''
+    required: false
 runs:
   using: composite
   steps:
@@ -114,12 +118,19 @@ runs:
             REF=$(gh api repos/$REPOSITORY --jq '.default_branch')
           fi
         fi
-        $GIT -c protocol.version=2 fetch --no-tags --prune --progress --filter=blob:none --depth=1 origin +${REF}:refs/remotes/origin/${REF}
+
+        FILTER_ARG="--no-filter"
+        if [ -n "$FILTER" ]; then
+          FILTER_ARG="--filter=$FILTER"
+        fi
+        
+        $GIT -c protocol.version=2 fetch --no-tags --prune --progress "$FILTER_ARG" --depth=1 origin +${REF}:refs/remotes/origin/${REF}
         echo "::endgroup::"
       env:
         REF: ${{ inputs.ref }}
         REPOSITORY: ${{ inputs.repository }}
         GH_TOKEN: ${{ inputs.token }}
+        FILTER: ${{ inputs.filter }}
       working-directory: ${{ inputs.path }}
       shell: bash
 
